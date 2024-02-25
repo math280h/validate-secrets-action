@@ -34,3 +34,6 @@ jobs:
       # Use the output from the `test` step
       - name: Get the output time
         run: echo "The time was ${{ steps.test.outputs.time }}"
+
+      - name: Get the output files
+        run: echo "The files were ${{ steps.test.outputs.missing_files }}"
