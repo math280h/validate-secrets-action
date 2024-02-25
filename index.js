@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const get_env_secrets = async (type, name, EnvName, GHToken) => {
+    console.log(`Calling: https://api.github.com/repositories/${github.repo_id}/environments/${EnvName}/${type}/${name}`)
   const secret_response = await fetch(
     `https://api.github.com/repositories/${github.repo_id}/environments/${EnvName}/${type}/${name}`,
     (Headers = {
@@ -20,8 +21,9 @@ const get_env_secrets = async (type, name, EnvName, GHToken) => {
 };
 
 const get_repo_and_org_secrets = async (type, name, GHToken) => {
+    console.log(`Calling: https://api.github.com/repositories/${github.repo_id}/actions/${type}/${name}`)
   const repo_secrets_response = await fetch(
-    `https://api.github.com/repositories/${github.repo_id}/actions/secrets/${name}`,
+    `https://api.github.com/repositories/${github.repo_id}/actions/${type}/${name}`,
     (Headers = {
       Authorization: `Bearer ${GHToken}`,
     })
@@ -31,8 +33,9 @@ const get_repo_and_org_secrets = async (type, name, GHToken) => {
       `Failed to fetch ${type}.${name} from repository: ${repo_secrets_response.status}`
     );
 
+    console.log(`Calling: https://api.github.com/orgs/${github.org}/actions/${type}/${name}`)
     const org_secrets_response = await fetch(
-      `https://api.github.com/orgs/${github.org}/actions/secrets/${name}`,
+      `https://api.github.com/orgs/${github.org}/actions/${type}/${name}`,
       (Headers = {
         Authorization: `Bearer ${GHToken}`,
       })
