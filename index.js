@@ -91,7 +91,7 @@ try {
           const type = match.split(".")[0].split(" ")[1];
           if (type === "secrets") {
             console.log("Secrets");
-            console.log(github.repo_id);
+            console.log(github.context.payload.repository.id);
           } else if (type === "vars") {
             console.log("Vars");
           } else {
