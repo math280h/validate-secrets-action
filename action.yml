@@ -10,7 +10,6 @@ inputs:
   gh_token:
     description: 'Github token to use for the action'
     required: true
-    default: ${{ secrets.GITHUB_TOKEN }}
 outputs:
   time: # id of output
     description: 'The time we greeted you'
