@@ -33,9 +33,9 @@ const get_repo_and_org_secrets = async (type, name, GHToken) => {
       `Failed to fetch ${type}.${name} from repository: ${repo_secrets_response.status}`
     );
 
-    console.log(`Calling: https://api.github.com/orgs/${github.context.payload.org.id}/actions/${type}/${name}`)
+    console.log(`Calling: https://api.github.com/orgs/${github.context.payload.org}/actions/${type}/${name}`)
     const org_secrets_response = await fetch(
-      `https://api.github.com/orgs/${github.context.payload.org.id}/actions/${type}/${name}`,
+      `https://api.github.com/orgs/${github.context.payload.org}/actions/${type}/${name}`,
       (Headers = {
         Authorization: `Bearer ${GHToken}`,
       })
