@@ -1,0 +1,29 @@
+on: [push]
+
+jobs:
+  hello_world_job:
+    runs-on: ubuntu-latest
+    name: Validate secrets in the repository
+    steps:
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: Install npm package
+          run: npm install
+
+        - name: Test the action
+          id: test
+          uses: ./
+          with:
+            files: |-
+                test.yaml
+
+        - name: Test
+          run: echo ${{ secrets.TEST_SECRET }}
+      
+        - name: Test vars
+          run: echo ${{ vars.TEST_VAR }}
+
+      # Use the output from the `test` step
+        - name: Get the output time
+          run: echo "The time was ${{ steps.test.outputs.time }}"

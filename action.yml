@@ -1,0 +1,21 @@
+name: 'Validate secrets and variables in env, repository, org for a github action'
+description: 'This action checks if the secrets and variables are present in the environment, repository, or organization'
+inputs:
+  files:
+    description: 'Array of files to process'
+    required: true
+  env_name:
+    description: 'Name of the github environment, if not specified repository level will be checked'
+    required: false
+  gh_token:
+    description: 'Github token to use for the action'
+    required: true
+    default: ${{ secrets.GITHUB_TOKEN }}
+outputs:
+  time: # id of output
+    description: 'The time we greeted you'
+  missing_files:
+    description: 'The files that were not found'
+runs:
+  using: 'node20'
+  main: 'index.js'
