@@ -15,11 +15,17 @@ const get_request_init = (GHToken) => {
 };
 
 const get_env_secrets = async (type, name, EnvName, GHToken) => {
+  let longType;
+  if (type === "vars") {
+    longType = "variables";
+  } else {
+    longType = type;
+  }
   console.log(
-    `Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/environments/${EnvName}/${type}/${name}`,
+    `Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/environments/${EnvName}/${longType}/${name}`,
   );
   const secret_response = await fetch(
-    `https://api.github.com/repositories/${github.context.payload.repository.id}/environments/${EnvName}/${type}/${name}`,
+    `https://api.github.com/repositories/${github.context.payload.repository.id}/environments/${EnvName}/${longType}/${name}`,
     get_request_init(GHToken),
   );
   if (secret_response.status !== 200) {
@@ -32,24 +38,29 @@ const get_env_secrets = async (type, name, EnvName, GHToken) => {
 };
 
 const get_repo_and_org_secrets = async (type, name, check_org, GHToken) => {
+  let longType;
+  if (type === "vars") {
+    longType = "variables";
+  } else {
+    longType = type;
+  }
   console.log(
-    `Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`,
+    `Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${longType}/${name}`,
   );
   await fetch(
-    `https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`,
+    `https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${longType}/${name}`,
     get_request_init(GHToken),
   ).then(async (response) => {
-    console.log(response);
     if (response.status !== 200) {
       console.error(
         `Failed to fetch ${type}.${name} from repository: ${response.status}`,
       );
       if (check_org) {
         console.log(
-          `Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
+          `Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${longType}/${name}`,
         );
         await fetch(
-          `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
+          `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${longType}/${name}`,
           get_request_init(GHToken),
         ).then((response) => {
           if (response.status !== 200) {
@@ -133,6 +144,7 @@ try {
                 get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then(
                   (deep_response) => {
                     if (!deep_response) {
+                      console.log(`Adding ${type}.${name} to missing`);
                       missing.push({
                         type: type,
                         name: name,
@@ -147,6 +159,7 @@ try {
             get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then(
               (response) => {
                 if (!response) {
+                  console.log(`Adding ${type}.${name} to missing`);
                   missing.push({
                     type: type,
                     name: name,
