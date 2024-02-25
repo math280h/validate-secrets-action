@@ -29,13 +29,14 @@ const get_repo_and_org_secrets = async (type, name, GHToken) => {
     })
   );
   if (repo_secrets_response.status !== 200) {
+    console.log(repo_secrets_response.json())
     console.error(
       `Failed to fetch ${type}.${name} from repository: ${repo_secrets_response.status}`
     );
 
-    console.log(`Calling: https://api.github.com/orgs/${github.context.payload.org}/actions/${type}/${name}`)
+    console.log(`Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`)
     const org_secrets_response = await fetch(
-      `https://api.github.com/orgs/${github.context.payload.org}/actions/${type}/${name}`,
+      `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
       (Headers = {
         Authorization: `Bearer ${GHToken}`,
       })
