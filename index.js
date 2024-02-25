@@ -3,15 +3,24 @@ const github = require("@actions/github");
 const fs = require("fs");
 const path = require("path");
 
+const get_request_init = (GHToken) => {
+  headers = new Headers();
+  headers.append("accept", "application/vnd.github+json");
+  headers.append("Authorization", `Bearer ${GHToken}`);
+  headers.append("X-GitHub-Api-Version", 2022 - 11 - 28);
+
+  return {
+    headers: headers,
+  };
+};
+
 const get_env_secrets = async (type, name, EnvName, GHToken) => {
   console.log(
     `Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/environments/${EnvName}/${type}/${name}`,
   );
   const secret_response = await fetch(
     `https://api.github.com/repositories/${github.context.payload.repository.id}/environments/${EnvName}/${type}/${name}`,
-    (Headers = {
-      Authorization: `Bearer ${GHToken}`,
-    }),
+    get_request_init(GHToken),
   );
   if (secret_response.status !== 200) {
     console.error(
@@ -28,11 +37,7 @@ const get_repo_and_org_secrets = async (type, name, check_org, GHToken) => {
   );
   await fetch(
     `https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`,
-    (Headers = {
-      accept: "application/vnd.github+json",
-      Authorization: `Bearer ${GHToken}`,
-      "X-GitHub-Api-Version": 2022 - 11 - 28,
-    }),
+    get_request_init(GHToken),
   ).then(async (response) => {
     console.log(response);
     if (response.status !== 200) {
@@ -41,15 +46,11 @@ const get_repo_and_org_secrets = async (type, name, check_org, GHToken) => {
       );
       if (check_org) {
         console.log(
-            `Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
-          );
+          `Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
+        );
         await fetch(
           `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
-          (Headers = {
-            accept: "application/vnd.github+json",
-            Authorization: `Bearer ${GHToken}`,
-            "X-GitHub-Api-Version": 2022 - 11 - 28,
-          }),
+          get_request_init(GHToken),
         ).then((response) => {
           if (response.status !== 200) {
             console.error(
