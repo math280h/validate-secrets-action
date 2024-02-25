@@ -39,10 +39,10 @@ const get_repo_and_org_secrets = async (type, name, check_org, GHToken) => {
       console.error(
         `Failed to fetch ${type}.${name} from repository: ${response.status}`,
       );
-      console.log(
-        `Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
-      );
       if (check_org) {
+        console.log(
+            `Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
+          );
         await fetch(
           `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
           (Headers = {
@@ -72,10 +72,6 @@ try {
   const EnvName = core.getInput("env_name");
   const GHToken = core.getInput("gh_token");
   const CheckOrg = core.getBooleanInput("check_org");
-
-  if (CheckOrg === "") {
-    CheckOrg = false;
-  }
 
   let missing = [];
 
