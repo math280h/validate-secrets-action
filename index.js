@@ -101,6 +101,10 @@ try {
 
           // ${{ secrets.GITHUB_TOKEN }}
           const name = match.split(".")[1].split(" ")[0];
+          if (name === "GITHUB_TOKEN") {
+            console.debug("Skipping GITHUB_TOKEN");
+            return;
+          }
           if (target !== "repository") {
             console.log("Environment Name: " + EnvName);
             get_env_secrets(type, name, EnvName, GHToken).then((response) => {

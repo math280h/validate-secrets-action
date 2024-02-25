@@ -22,8 +22,14 @@ jobs:
         - name: Test
           run: echo ${{ secrets.TEST_SECRET }}
       
+        - name: Test
+          run: echo ${{ secrets.TEST_SECRET_2 }}
+
         - name: Test vars
           run: echo ${{ vars.TEST_VAR }}
+
+        - name: Test vars 2
+          run: echo ${{ vars.TEST_VAR_2 }}
 
       # Use the output from the `test` step
         - name: Get the output time
