@@ -29,7 +29,9 @@ const get_repo_and_org_secrets = async (type, name, GHToken) => {
   await fetch(
     `https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`,
     (Headers = {
+      accept: "application/vnd.github+json",
       Authorization: `Bearer ${GHToken}`,
+      "X-GitHub-Api-Version": 2022 - 11 - 28,
     }),
   ).then(async (response) => {
     console.log(response);
@@ -43,7 +45,9 @@ const get_repo_and_org_secrets = async (type, name, GHToken) => {
       await fetch(
         `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
         (Headers = {
+          accept: "application/vnd.github+json",
           Authorization: `Bearer ${GHToken}`,
+          "X-GitHub-Api-Version": 2022 - 11 - 28,
         }),
       ).then((response) => {
         if (response.status !== 200) {
