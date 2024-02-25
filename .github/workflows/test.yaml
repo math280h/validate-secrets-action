@@ -17,7 +17,7 @@ jobs:
         with:
           files: |-
             test.yaml
-          gh_token: ${{ secrets.GITHUB_TOKEN }}
+          gh_token: ${{ secrets.SECRET_VALIDATION_TOKEN }}
 
       - name: Test
         run: echo ${{ secrets.TEST_SECRET }}
