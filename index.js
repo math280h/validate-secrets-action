@@ -22,7 +22,7 @@ const get_env_secrets = async (type, name, EnvName, GHToken) => {
   return true;
 };
 
-const get_repo_and_org_secrets = async (type, name, GHToken) => {
+const get_repo_and_org_secrets = async (type, name, check_org, GHToken) => {
   console.log(
     `Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`,
   );
@@ -42,23 +42,27 @@ const get_repo_and_org_secrets = async (type, name, GHToken) => {
       console.log(
         `Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
       );
-      await fetch(
-        `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
-        (Headers = {
-          accept: "application/vnd.github+json",
-          Authorization: `Bearer ${GHToken}`,
-          "X-GitHub-Api-Version": 2022 - 11 - 28,
-        }),
-      ).then((response) => {
-        if (response.status !== 200) {
-          console.error(
-            `Failed to fetch ${type}.${name} from organization: ${response.status}`,
-          );
-          return false;
-        }
-        return true;
-      });
+      if (check_org) {
+        await fetch(
+          `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
+          (Headers = {
+            accept: "application/vnd.github+json",
+            Authorization: `Bearer ${GHToken}`,
+            "X-GitHub-Api-Version": 2022 - 11 - 28,
+          }),
+        ).then((response) => {
+          if (response.status !== 200) {
+            console.error(
+              `Failed to fetch ${type}.${name} from organization: ${response.status}`,
+            );
+            return false;
+          }
+        });
+      } else {
+        return false;
+      }
     }
+    return true;
   });
 };
 
@@ -67,6 +71,7 @@ try {
   const files = core.getMultilineInput("files");
   const EnvName = core.getInput("env_name");
   const GHToken = core.getInput("gh_token");
+  const CheckOrg = core.getBooleanInput("check_org");
 
   let missing = [];
 
@@ -124,7 +129,7 @@ try {
             console.log("Environment Name: " + EnvName);
             get_env_secrets(type, name, EnvName, GHToken).then((response) => {
               if (!response) {
-                get_repo_and_org_secrets(type, name, GHToken).then(
+                get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then(
                   (deep_response) => {
                     if (!deep_response) {
                       missing.push({
@@ -138,7 +143,7 @@ try {
               }
             });
           } else {
-            get_repo_and_org_secrets(type, name, GHToken).then((response) => {
+            get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then((response) => {
               if (!response) {
                 missing.push({
                   type: type,
