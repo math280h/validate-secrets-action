@@ -35,7 +35,7 @@ const get_repo_and_org_secrets = async (type, name, check_org, GHToken) => {
   console.log(
     `Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`,
   );
-  await fetch(
+  return await fetch(
     `https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`,
     get_request_init(GHToken),
   ).then(async (response) => {
