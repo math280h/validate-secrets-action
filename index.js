@@ -73,6 +73,10 @@ try {
   const GHToken = core.getInput("gh_token");
   const CheckOrg = core.getBooleanInput("check_org");
 
+  if (CheckOrg === "") {
+    CheckOrg = false;
+  }
+
   let missing = [];
 
   console.log(files);
@@ -143,15 +147,17 @@ try {
               }
             });
           } else {
-            get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then((response) => {
-              if (!response) {
-                missing.push({
-                  type: type,
-                  name: name,
-                  fileName: fileName,
-                });
-              }
-            });
+            get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then(
+              (response) => {
+                if (!response) {
+                  missing.push({
+                    type: type,
+                    name: name,
+                    fileName: fileName,
+                  });
+                }
+              },
+            );
           }
         });
       }
