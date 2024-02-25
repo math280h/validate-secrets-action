@@ -7,7 +7,7 @@ const get_request_init = (GHToken) => {
   headers = new Headers();
   headers.append("accept", "application/vnd.github+json");
   headers.append("Authorization", `Bearer ${GHToken}`);
-  headers.append("X-GitHub-Api-Version", 2022 - 11 - 28);
+  headers.append("X-GitHub-Api-Version", "2022-11-28");
 
   return {
     headers: headers,
