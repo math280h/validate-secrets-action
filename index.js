@@ -4,16 +4,18 @@ const fs = require("fs");
 const path = require("path");
 
 const get_env_secrets = async (type, name, EnvName, GHToken) => {
-    console.log(`Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/environments/${EnvName}/${type}/${name}`)
+  console.log(
+    `Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/environments/${EnvName}/${type}/${name}`,
+  );
   const secret_response = await fetch(
     `https://api.github.com/repositories/${github.context.payload.repository.id}/environments/${EnvName}/${type}/${name}`,
     (Headers = {
       Authorization: `Bearer ${GHToken}`,
-    })
+    }),
   );
   if (secret_response.status !== 200) {
     console.error(
-      `Failed to fetch ${type}.${name} from ${EnvName}: ${secret_response.status}`
+      `Failed to fetch ${type}.${name} from ${EnvName}: ${secret_response.status}`,
     );
     return false;
   }
@@ -21,34 +23,39 @@ const get_env_secrets = async (type, name, EnvName, GHToken) => {
 };
 
 const get_repo_and_org_secrets = async (type, name, GHToken) => {
-    console.log(`Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`)
-  const repo_secrets_response = await fetch(
+  console.log(
+    `Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`,
+  );
+  await fetch(
     `https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`,
     (Headers = {
       Authorization: `Bearer ${GHToken}`,
-    })
-  );
-  if (repo_secrets_response.status !== 200) {
-    console.log(repo_secrets_response.json())
-    console.error(
-      `Failed to fetch ${type}.${name} from repository: ${repo_secrets_response.status}`
-    );
-
-    console.log(`Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`)
-    const org_secrets_response = await fetch(
-      `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
-      (Headers = {
-        Authorization: `Bearer ${GHToken}`,
-      })
-    );
-    if (org_secrets_response.status !== 200) {
+    }),
+  ).then(async (response) => {
+    console.log(response);
+    if (response.status !== 200) {
       console.error(
-        `Failed to fetch ${type}.${name} from organization: ${org_secrets_response.status}`
+        `Failed to fetch ${type}.${name} from repository: ${response.status}`,
       );
-      return false;
+      console.log(
+        `Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
+      );
+      await fetch(
+        `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
+        (Headers = {
+          Authorization: `Bearer ${GHToken}`,
+        }),
+      ).then((response) => {
+        if (response.status !== 200) {
+          console.error(
+            `Failed to fetch ${type}.${name} from organization: ${response.status}`,
+          );
+          return false;
+        }
+        return true;
+      });
     }
-  }
-  return true;
+  });
 };
 
 try {
@@ -86,7 +93,7 @@ try {
       const fileContents = fs.readFileSync(filePath, "utf8");
       console.log(`Content of ${fileName}:`);
       const matches = fileContents.match(
-        /(\${{\s*(secrets|vars)\.[^\s]*\s*}})/g
+        /(\${{\s*(secrets|vars)\.[^\s]*\s*}})/g,
       );
       if (matches) {
         matches.forEach((match) => {
@@ -122,16 +129,12 @@ try {
                         fileName: fileName,
                       });
                     }
-                  }
+                  },
                 );
               }
             });
           } else {
-            get_repo_and_org_secrets(
-              type,
-              name,
-              GHToken
-            ).then((response) => {
+            get_repo_and_org_secrets(type, name, GHToken).then((response) => {
               if (!response) {
                 missing.push({
                   type: type,

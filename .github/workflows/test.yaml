@@ -5,32 +5,32 @@ jobs:
     runs-on: ubuntu-latest
     name: Validate secrets in the repository
     steps:
-        - name: Checkout
-          uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
-        - name: Install npm package
-          run: npm install
+      - name: Install npm package
+        run: npm install
 
-        - name: Test the action
-          id: test
-          uses: ./
-          with:
-            files: |-
-                test.yaml
-            gh_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Test the action
+        id: test
+        uses: ./
+        with:
+          files: |-
+            test.yaml
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
 
-        - name: Test
-          run: echo ${{ secrets.TEST_SECRET }}
-      
-        - name: Test
-          run: echo ${{ secrets.TEST_SECRET_2 }}
+      - name: Test
+        run: echo ${{ secrets.TEST_SECRET }}
 
-        - name: Test vars
-          run: echo ${{ vars.TEST_VAR }}
+      - name: Test
+        run: echo ${{ secrets.TEST_SECRET_2 }}
 
-        - name: Test vars 2
-          run: echo ${{ vars.TEST_VAR_2 }}
+      - name: Test vars
+        run: echo ${{ vars.TEST_VAR }}
+
+      - name: Test vars 2
+        run: echo ${{ vars.TEST_VAR_2 }}
 
       # Use the output from the `test` step
-        - name: Get the output time
-          run: echo "The time was ${{ steps.test.outputs.time }}"
+      - name: Get the output time
+        run: echo "The time was ${{ steps.test.outputs.time }}"
