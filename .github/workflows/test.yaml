@@ -19,16 +19,16 @@ jobs:
             test.yaml
           gh_token: ${{ secrets.SECRET_VALIDATION_TOKEN }}
 
-      - name: Test
+      - name: Test secret exists
         run: echo ${{ secrets.TEST_SECRET }}
 
-      - name: Test
+      - name: Test secret does not exist
         run: echo ${{ secrets.TEST_SECRET_2 }}
 
-      - name: Test vars
+      - name: Test var exists
         run: echo ${{ vars.TEST_VAR }}
 
-      - name: Test vars 2
+      - name: Test var does not exist
         run: echo ${{ vars.TEST_VAR_2 }}
 
       # Use the output from the `test` step

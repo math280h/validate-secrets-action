@@ -213,7 +213,8 @@ try {
       console.error(`Error reading ${fileName}: ${error}`);
     }
   });
-
+  console.log("Missing secrets/variables:")
+  console.log(missing)
   const time = new Date().toTimeString();
   core.setOutput("time", time);
   core.setOutput("missing", missing);
