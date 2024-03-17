@@ -1,62 +1,81 @@
-const core = require("@actions/core");
-const github = require("@actions/github");
-const fs = require("fs");
-const path = require("path");
+const core = require('@actions/core');
+const github = require('@actions/github');
+const fs = require('fs');
+const path = require('path');
 
-const get_request_init = (GHToken) => {
-  headers = new Headers();
-  headers.append("accept", "application/vnd.github+json");
-  headers.append("Authorization", `Bearer ${GHToken}`);
-  headers.append("X-GitHub-Api-Version", "2022-11-28");
+const GetRequestInit = (GHToken) => {
+  const headers = new Headers();
+  headers.append('accept', 'application/vnd.github+json');
+  headers.append('Authorization', `Bearer ${GHToken}`);
+  headers.append('X-GitHub-Api-Version', '2022-11-28');
 
   return {
-    headers: headers,
+    headers,
   };
 };
 
-const get_env_secrets = async (type, name, EnvName, GHToken) => {
-  console.log(
+const log = (message, verbose) => {
+  if (verbose) {
+    console.log(message); // eslint-disable-line no-console
+  }
+};
+
+const error = (message, verbose) => {
+  if (verbose) {
+    console.error(message); // eslint-disable-line no-console
+  }
+};
+
+const GetEnvSecrets = async (type, name, EnvName, GHToken, verbose) => {
+  log(
     `Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/environments/${EnvName}/${type}/${name}`,
+    verbose,
   );
-  const secret_response = await fetch(
+  const secretResponse = await fetch(
     `https://api.github.com/repositories/${github.context.payload.repository.id}/environments/${EnvName}/${type}/${name}`,
-    get_request_init(GHToken),
+    GetRequestInit(GHToken),
   );
-  if (secret_response.status !== 200) {
-    console.error(
-      `Failed to fetch ${type}.${name} from ${EnvName}: ${secret_response.status}`,
+  if (secretResponse.status !== 200) {
+    error(
+      `Failed to fetch ${type}.${name} from ${EnvName}: ${secretResponse.status}`,
+      verbose,
     );
     return false;
   }
   return true;
 };
 
-const get_repo_and_org_secrets = async (type, name, check_org, GHToken) => {
-  console.log(
+const GetRepoAndOrgSecrets = async (type, name, checkOrg, GHToken, verbose) => {
+  log(
     `Calling: https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`,
+    verbose,
   );
-  return await fetch(
+  return fetch(
     `https://api.github.com/repositories/${github.context.payload.repository.id}/actions/${type}/${name}`,
-    get_request_init(GHToken),
+    GetRequestInit(GHToken),
   ).then(async (response) => {
     if (response.status !== 200) {
-      console.error(
+      error(
         `Failed to fetch ${type}.${name} from repository: ${response.status}`,
+        verbose,
       );
-      if (check_org) {
-        console.log(
+      if (checkOrg) {
+        log(
           `Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
+          verbose,
         );
         await fetch(
           `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/${type}/${name}`,
-          get_request_init(GHToken),
-        ).then((response) => {
-          if (response.status !== 200) {
-            console.error(
-              `Failed to fetch ${type}.${name} from organization: ${response.status}`,
+          GetRequestInit(GHToken),
+        ).then((orgResponse) => {
+          if (orgResponse.status !== 200) {
+            error(
+              `Failed to fetch ${type}.${name} from organization: ${orgResponse.status}`,
+              verbose,
             );
             return false;
           }
+          return true;
         });
       } else {
         return false;
@@ -66,32 +85,37 @@ const get_repo_and_org_secrets = async (type, name, check_org, GHToken) => {
   });
 };
 
-const get_repo_and_org_vars = async (type, name, check_org, GHToken) => {
-  console.log(
+const GetRepoAndOrgVars = async (type, name, checkOrg, GHToken, verbose) => {
+  log(
     `Calling: https://api.github.com/repos/${github.context.payload.repository.owner.name}/${github.context.payload.repository.name}/actions/variables/${name}`,
+    verbose,
   );
   await fetch(
     `https://api.github.com/repos/${github.context.payload.repository.owner.name}/${github.context.payload.repository.name}/actions/variables/${name}`,
-    get_request_init(GHToken),
+    GetRequestInit(GHToken),
   ).then(async (response) => {
     if (response.status !== 200) {
-      console.error(
+      error(
         `Failed to fetch ${type}.${name} from repository: ${response.status}`,
+        verbose,
       );
-      if (check_org) {
-        console.log(
+      if (checkOrg) {
+        log(
           `Calling: https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/variables/${name}`,
+          verbose,
         );
         await fetch(
           `https://api.github.com/orgs/${github.context.payload.repository.owner.name}/actions/variables/${name}`,
-          get_request_init(GHToken),
-        ).then((response) => {
-          if (response.status !== 200) {
-            console.error(
-              `Failed to fetch ${type}.${name} from organization: ${response.status}`,
+          GetRequestInit(GHToken),
+        ).then((orgResponse) => {
+          if (orgResponse.status !== 200) {
+            error(
+              `Failed to fetch ${type}.${name} from organization: ${orgResponse.status}`,
+              verbose,
             );
             return false;
           }
+          return true;
         });
       } else {
         return false;
@@ -103,130 +127,134 @@ const get_repo_and_org_vars = async (type, name, check_org, GHToken) => {
 
 try {
   // INPUT
-  const files = core.getMultilineInput("files");
-  const EnvName = core.getInput("env_name");
-  const GHToken = core.getInput("gh_token");
-  const CheckOrg = core.getBooleanInput("check_org");
+  const files = core.getMultilineInput('files');
+  const EnvName = core.getInput('env_name');
+  const GHToken = core.getInput('gh_token');
+  const CheckOrg = core.getBooleanInput('checkOrg');
+  const verbose = core.getBooleanInput('verbose');
 
-  let missing = [];
+  const missing = [];
 
-  console.log(files);
+  log(files, verbose);
   // Ensure that the files are not empty
   if (files.length === 0) {
-    throw new Error("No files were provided");
+    throw new Error('No files were provided');
   }
 
   // Ensure that GH Token is not empty
-  if (GHToken === "") {
-    throw new Error("No GitHub Token was provided");
+  if (GHToken === '') {
+    throw new Error('No GitHub Token was provided');
   }
 
   let target;
-  console.log(EnvName);
+  log(EnvName, verbose);
   // If the environment name is not provided, use repository target
-  if (EnvName === "") {
-    target = "repository";
+  if (EnvName === '') {
+    target = 'repository';
   } else {
     target = EnvName;
   }
 
-  const folderPath = path.join(__dirname, ".github", "workflows");
+  const folderPath = path.join(__dirname, '.github', 'workflows');
   const promises = files.map((fileName) => {
     const filePath = path.join(folderPath, fileName);
     try {
-      const fileContents = fs.readFileSync(filePath, "utf8");
-      console.log(`Content of ${fileName}:`);
+      const fileContents = fs.readFileSync(filePath, 'utf8');
+      log(`Content of ${fileName}:`, verbose);
       const matches = fileContents.match(
         /(\${{\s*(secrets|vars)\.[^\s]*\s*}})/g,
       );
       if (matches) {
         return Promise.all(matches.map((match) => {
-          console.log(match);
-          // Match = ${{ secrets.GITHUB_TOKEN }} or ${{ vars.GITHUB_TEST }}, get the secrets. or vars. part
-          const type = match.split(".")[0].split(" ")[1];
-          if (type === "secrets") {
-            console.log("Secrets");
-            console.log(github.context.payload.repository.id);
-          } else if (type === "vars") {
-            console.log("Vars");
+          log(match, verbose);
+          // Match = ${{ secrets.GITHUB_TOKEN }} or
+          // ${{ vars.GITHUB_TEST }}, get the secrets. or vars. part
+          const type = match.split('.')[0].split(' ')[1];
+          if (type === 'secrets') {
+            log('Secrets', verbose);
+            log(github.context.payload.repository.id, verbose);
+          } else if (type === 'vars') {
+            log('Vars', verbose);
           } else {
-            console.warn(`Unknown type \$\{\{ \}\}: ${type}`);
+            error(`Unknown type $\{{ }}: ${type}`, verbose);
             return Promise.resolve();
           }
 
           // ${{ secrets.GITHUB_TOKEN }}
-          const name = match.split(".")[1].split(" ")[0];
-          if (name === "GITHUB_TOKEN") {
-            console.debug("Skipping GITHUB_TOKEN");
+          const name = match.split('.')[1].split(' ')[0];
+          if (name === 'GITHUB_TOKEN') {
+            log('Skipping GITHUB_TOKEN');
             return Promise.resolve();
           }
-          if (target !== "repository") {
-            console.log("Environment Name: " + EnvName);
-            return get_env_secrets(type, name, EnvName, GHToken).then((response) => {
+          if (target !== 'repository') {
+            log(`Environment Name: ${EnvName}`, verbose);
+            return GetEnvSecrets(type, name, EnvName, GHToken).then((response) => {
               if (!response) {
-                return get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then(
-                  (deep_response) => {
-                    if (!deep_response) {
-                      console.log(`Adding ${type}.${name} to missing`);
+                return GetRepoAndOrgSecrets(type, name, CheckOrg, GHToken, verbose).then(
+                  (deepResponse) => {
+                    if (!deepResponse) {
+                      log(`Adding ${type}.${name} to missing`, true);
                       missing.push({
-                        type: type,
-                        name: name,
-                        fileName: fileName,
+                        type,
+                        name,
+                        fileName,
                       });
                     }
                   },
                 );
               }
+              return Promise.resolve();
             });
-          } else {
-            if (type === "vars") {
-              return get_repo_and_org_vars(type, name, CheckOrg, GHToken).then(
-                (response) => {
-                  if (!response) {
-                    console.log(`Adding ${type}.${name} to missing`);
-                    missing.push({
-                      type: type,
-                      name: name,
-                      fileName: fileName,
-                    });
-                  }
-                },
-              );
-            } else {
-              return get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then(
-                (response) => {
-                  if (!response) {
-                    console.log(`Adding ${type}.${name} to missing`);
-                    missing.push({
-                      type: type,
-                      name: name,
-                      fileName: fileName,
-                    });
-                  }
-                },
-              );
-            }
           }
+          if (type === 'vars') {
+            return GetRepoAndOrgVars(type, name, CheckOrg, GHToken, verbose).then(
+              (response) => {
+                if (!response) {
+                  log(`Adding ${type}.${name} to missing`, true);
+                  missing.push({
+                    type,
+                    name,
+                    fileName,
+                  });
+                }
+              },
+            );
+          }
+          return GetRepoAndOrgSecrets(type, name, CheckOrg, GHToken, verbose).then(
+            (response) => {
+              if (!response) {
+                log(`Adding ${type}.${name} to missing`, true);
+                missing.push({
+                  type,
+                  name,
+                  fileName,
+                });
+              }
+            },
+          );
         }));
       }
-    } catch (error) {
-      console.error(`Error reading ${fileName}: ${error}`);
-      return Promise.resolve();
+    } catch (err) {
+      error(`Error reading ${fileName}: ${err}`, true);
+      return Promise.reject(err);
     }
+
+    return Promise.resolve();
   });
 
   Promise.all(promises).then(() => {
-    console.log("Missing secrets/variables:")
-    console.log(missing)
-    const time = new Date().toTimeString();
-    core.setOutput("time", time);
-    core.setOutput("missing", missing);
-    // Get the JSON webhook payload for the event that triggered the workflow
+    log('Missing secrets/variables:', verbose);
+    log(missing, verbose);
+
+    if (missing.length > 0) {
+      core.setFailed('Missing secrets/variables');
+    }
+
     const payload = JSON.stringify(github.context.payload, undefined, 2);
-    console.log(`The event payload: ${payload}`);
-  }).catch((error) => {
-    core.setFailed(error.message);
+    log(`The event payload: ${payload}`, verbose);
+  }).catch((err) => {
+    core.setFailed(err.message);
   });
-} catch (error) {
-  core.setFailed(error.message);
+} catch (err) {
+  core.setFailed(err.message);
 }

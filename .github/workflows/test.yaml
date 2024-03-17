@@ -6,7 +6,7 @@ jobs:
     name: Validate secrets in the repository
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install npm package
         run: npm install
@@ -18,6 +18,7 @@ jobs:
           files: |-
             test.yaml
           gh_token: ${{ secrets.SECRET_VALIDATION_TOKEN }}
+          verbose: true
 
       - name: Test secret exists
         run: echo ${{ secrets.TEST_SECRET }}
