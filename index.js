@@ -131,7 +131,7 @@ try {
   }
 
   const folderPath = path.join(__dirname, ".github", "workflows");
-  files.forEach((fileName) => {
+  const promises = files.map((fileName) => {
     const filePath = path.join(folderPath, fileName);
     try {
       const fileContents = fs.readFileSync(filePath, "utf8");
@@ -140,7 +140,7 @@ try {
         /(\${{\s*(secrets|vars)\.[^\s]*\s*}})/g,
       );
       if (matches) {
-        matches.forEach((match) => {
+        return Promise.all(matches.map((match) => {
           console.log(match);
           // Match = ${{ secrets.GITHUB_TOKEN }} or ${{ vars.GITHUB_TEST }}, get the secrets. or vars. part
           const type = match.split(".")[0].split(" ")[1];
@@ -151,20 +151,20 @@ try {
             console.log("Vars");
           } else {
             console.warn(`Unknown type \$\{\{ \}\}: ${type}`);
-            return;
+            return Promise.resolve();
           }
 
           // ${{ secrets.GITHUB_TOKEN }}
           const name = match.split(".")[1].split(" ")[0];
           if (name === "GITHUB_TOKEN") {
             console.debug("Skipping GITHUB_TOKEN");
-            return;
+            return Promise.resolve();
           }
           if (target !== "repository") {
             console.log("Environment Name: " + EnvName);
-            get_env_secrets(type, name, EnvName, GHToken).then((response) => {
+            return get_env_secrets(type, name, EnvName, GHToken).then((response) => {
               if (!response) {
-                get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then(
+                return get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then(
                   (deep_response) => {
                     if (!deep_response) {
                       console.log(`Adding ${type}.${name} to missing`);
@@ -180,7 +180,7 @@ try {
             });
           } else {
             if (type === "vars") {
-              get_repo_and_org_vars(type, name, CheckOrg, GHToken).then(
+              return get_repo_and_org_vars(type, name, CheckOrg, GHToken).then(
                 (response) => {
                   if (!response) {
                     console.log(`Adding ${type}.${name} to missing`);
@@ -193,7 +193,7 @@ try {
                 },
               );
             } else {
-              get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then(
+              return get_repo_and_org_secrets(type, name, CheckOrg, GHToken).then(
                 (response) => {
                   if (!response) {
                     console.log(`Adding ${type}.${name} to missing`);
@@ -207,20 +207,26 @@ try {
               );
             }
           }
-        });
+        }));
       }
     } catch (error) {
       console.error(`Error reading ${fileName}: ${error}`);
+      return Promise.resolve();
     }
   });
-  console.log("Missing secrets/variables:")
-  console.log(missing)
-  const time = new Date().toTimeString();
-  core.setOutput("time", time);
-  core.setOutput("missing", missing);
-  // Get the JSON webhook payload for the event that triggered the workflow
-  const payload = JSON.stringify(github.context.payload, undefined, 2);
-  console.log(`The event payload: ${payload}`);
+
+  Promise.all(promises).then(() => {
+    console.log("Missing secrets/variables:")
+    console.log(missing)
+    const time = new Date().toTimeString();
+    core.setOutput("time", time);
+    core.setOutput("missing", missing);
+    // Get the JSON webhook payload for the event that triggered the workflow
+    const payload = JSON.stringify(github.context.payload, undefined, 2);
+    console.log(`The event payload: ${payload}`);
+  }).catch((error) => {
+    core.setFailed(error.message);
+  });
 } catch (error) {
   core.setFailed(error.message);
 }
