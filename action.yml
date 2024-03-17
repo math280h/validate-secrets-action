@@ -16,7 +16,6 @@ inputs:
     default: "false"
   verbose:
     description: "Print verbose logs"
-    type: boolean
     required: false
     default: "false"
 outputs:
