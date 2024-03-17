@@ -18,7 +18,7 @@ jobs:
           files: |-
             test.yaml
           gh_token: ${{ secrets.SECRET_VALIDATION_TOKEN }}
-          verbose: true
+          verbose: "true"
 
       - name: Test secret exists
         run: echo ${{ secrets.TEST_SECRET }}
