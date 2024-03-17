@@ -130,8 +130,8 @@ try {
   const files = core.getMultilineInput('files');
   const EnvName = core.getInput('env_name');
   const GHToken = core.getInput('gh_token');
-  const CheckOrg = core.getBooleanInput('checkOrg');
-  const verbose = core.getBooleanInput('verbose');
+  const CheckOrg = Boolean(core.getInput('checkOrg'));
+  const verbose = Boolean(core.getInput('verbose'));
 
   const missing = [];
 
